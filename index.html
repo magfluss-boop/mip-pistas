@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101315">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MiP Pistas">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Misteris i Prodigis · Pistas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: backstage cue desk — sticky cue panel (left) + running script (right); stacks on phones. Single dark theme by choice (used in a dark room). */
+:root{
+  --bg:#101315; --panel:#171b1e; --line:#262c30; --fg:#ece6da; --muted:#8e969b;
+  --standby:#e5484d; --standby-bg:#2a1517; --go:#3fbf6a; --go-ink:#07210f;
+  --amber:#f0b44c; --audio:#7fb0c9; --audio-bg:#142026;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--fg)}
+body{font:15px/1.5 var(--serif);padding-inline:16px;padding-block:0 40px}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 20px;padding-block:18px 14px;border-bottom:1px solid var(--line)}
+header h1{font:600 26px/1 var(--display);letter-spacing:.02em;margin:0;text-transform:uppercase}
+header h1 span{color:var(--muted);font-weight:500}
+.clock{display:flex;align-items:center;gap:10px;font:500 14px var(--mono);color:var(--muted)}
+.clock b{color:var(--fg);font-size:20px;font-variant-numeric:tabular-nums}
+.small-btn{border:1px solid var(--line);background:transparent;border-radius:6px;padding:4px 10px;font:600 13px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.small-btn:hover{color:var(--fg);border-color:var(--muted)}
+.wrap{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:28px;margin-top:20px;max-width:1180px;margin-inline:auto}
+aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);align-self:start;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.eyebrow{font:600 12px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.lamp{width:10px;height:10px;border-radius:50%;background:var(--standby);box-shadow:0 0 10px var(--standby)}
+.lamp.go{background:var(--go);box-shadow:0 0 12px var(--go)}
+.lamp.off{background:#3a4145;box-shadow:none}
+.armed{border-color:var(--standby);background:linear-gradient(var(--standby-bg),var(--panel) 70%)}
+.qrow{display:flex;align-items:baseline;gap:12px;margin-top:8px}
+.qnum{font:700 54px/0.9 var(--display);color:var(--standby)}
+.qfile{font:500 13px var(--mono);color:var(--muted);word-break:break-all}
+.qact{font:600 20px/1.2 var(--display);letter-spacing:.02em;text-transform:uppercase}
+.listen{margin-top:12px;font-size:13px;color:var(--muted)}
+.listen q{display:block;margin-top:4px;font:italic 21px/1.35 var(--serif);color:var(--fg);quotes:"«" "»"}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{font:600 12px var(--display);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--muted)}
+.chip.warn{color:var(--amber);border-color:#5a4520}
+.gobtn{width:100%;margin-top:14px;border:0;border-radius:10px;background:var(--go);color:var(--go-ink);font:700 34px/1 var(--display);letter-spacing:.12em;padding:18px 0 16px;text-transform:uppercase}
+.gobtn:hover{filter:brightness(1.08)}
+.gobtn:disabled{background:#2c3336;color:var(--muted);cursor:default}
+.nav{display:flex;justify-content:space-between;margin-top:10px;gap:8px}
+.playing .bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:12px}
+.playing .bar i{display:block;height:100%;width:0;background:var(--go)}
+.times{display:flex;justify-content:space-between;font:500 14px var(--mono);margin-top:6px;font-variant-numeric:tabular-nums}
+.times .rem{color:var(--fg);font-size:18px}
+.alert{margin-top:10px;padding:10px 12px;border-radius:8px;background:#2b2412;color:var(--amber);font:600 16px/1.25 var(--display);letter-spacing:.04em;text-transform:uppercase}
+.ctl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.ctl button{border:1px solid var(--line);background:#1f2427;border-radius:8px;padding:10px 0;font:600 16px var(--display);letter-spacing:.08em;text-transform:uppercase}
+.ctl button:hover{border-color:var(--muted)}
+.ctl .stop{color:var(--standby)}
+.vol{display:flex;align-items:center;gap:10px;margin-top:12px;font:500 13px var(--mono);color:var(--muted)}
+.vol input{flex:1;accent-color:var(--amber)}
+.loadbox .loadbtn{display:block;width:100%;margin-top:10px;padding:10px 0;font-size:16px;color:var(--fg);border-color:var(--amber)}
+.loadbox.ok{border-color:#2d5a3b}.loadbox.ok .loadbtn{border-color:var(--go);color:var(--go)}
+.loadstate{margin:8px 0 0;font:500 12.5px/1.4 var(--mono);color:var(--muted)}
+.keys{font:500 12px var(--mono);color:var(--muted);line-height:1.8}
+.keys kbd{border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--fg)}
+details summary{cursor:pointer;font:600 14px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+details ul{margin:10px 0 0;padding-left:18px;font-size:14px;color:var(--fg)}
+details li{margin-bottom:4px}
+/* script */
+main{min-width:0}
+.act{padding-block:6px 22px;border-bottom:1px solid var(--line)}
+.act h2{display:flex;align-items:baseline;gap:12px;font:700 28px/1.1 var(--display);text-transform:uppercase;letter-spacing:.02em;margin:18px 0 10px;text-wrap:balance}
+.act h2 .n{color:var(--amber);font-variant-numeric:tabular-nums;min-width:1.2ch}
+.act h2 .min{font:500 13px var(--mono);color:var(--muted);letter-spacing:0;text-transform:none;margin-left:auto;white-space:nowrap}
+.ln{max-width:65ch;margin:0 0 8px}
+.ln.a{font:14px/1.45 var(--serif);color:var(--muted);padding-left:14px;border-left:2px solid var(--line)}
+.ln.q{font-size:17px}
+.ln.audio{font-style:italic;color:var(--audio);background:var(--audio-bg);padding:6px 10px;border-radius:6px;margin-bottom:4px}
+.ln.audionote{font:600 13px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--amber);padding:2px 10px;margin-bottom:4px}
+.cue{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:12px 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);scroll-margin-top:120px}
+.cue .qn{font:700 28px/1 var(--display);color:var(--muted)}
+.cue .txt{flex:1;min-width:180px;font:600 15px/1.3 var(--display);letter-spacing:.03em;text-transform:uppercase}
+.cue .txt small{display:block;font:500 12px var(--mono);letter-spacing:0;text-transform:none;color:var(--muted);margin-top:3px}
+.cue button{border:1px solid var(--line);background:transparent;border-radius:6px;padding:6px 12px;font:600 14px var(--display);letter-spacing:.08em;text-transform:uppercase}
+.cue.is-armed{border-color:var(--standby);background:var(--standby-bg)}
+.cue.is-armed .qn{color:var(--standby)}
+.cue.is-armed .arm{display:none}
+.cue.is-done{opacity:.55}
+.cue.is-live{border-color:var(--go)}
+.cue.is-live .qn{color:var(--go)}
+.cue.fade .qn{font-size:18px}
+@media (max-width:820px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:18px}
+  aside{position:static}
+  .card{padding:12px}
+  .qnum{font-size:40px}
+  .listen q{font-size:18px}
+  .hide-sm{display:none}
+  .cue{scroll-margin-top:24px}
+  body{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
+  .dock{display:grid}
+}
+.dock{display:none;position:fixed;left:0;right:0;bottom:0;z-index:10;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1px solid var(--line)}
+.dock .dq{font:700 30px/1 var(--display);color:var(--standby)}
+.dock .dinfo{min-width:0;font:500 12px/1.3 var(--mono);color:var(--muted);overflow:hidden}
+.dock .dinfo b{display:block;color:var(--fg);font:italic 15px/1.25 var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock button{border:0;border-radius:8px;font:700 18px var(--display);letter-spacing:.08em;text-transform:uppercase;padding:12px 14px}
+.dock .dgo{background:var(--go);color:var(--go-ink);font-size:24px;padding:12px 20px}
+.dock .dgo:disabled{background:#2c3336;color:var(--muted)}
+.dock .dstop{background:#1f2427;color:var(--standby);border:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+<style>:root{padding-top:env(safe-area-inset-top,0px)}html,body{margin:0}body{font-family:system-ui}</style>
+</head>
+<body>
+<header>
+  <h1>Misteris i Prodigis <span>· pistas</span></h1>
+  <div class="clock">Función <b id="clock">00:00</b><button class="small-btn" id="clockReset" type="button">Reiniciar</button></div>
+</header>
+
+<div class="wrap">
+  <aside>
+    <section class="card loadbox" id="loadBox">
+      <div class="eyebrow">Pistas</div>
+      <button class="small-btn loadbtn" id="load" type="button">Cargar pistas</button>
+      <p class="loadstate" id="loadState">Cargando las pistas…</p>
+    </section>
+    <section class="card armed" id="nextCard" aria-live="polite">
+      <div class="eyebrow"><span class="lamp" id="lamp"></span><span id="nextLabel">Standby</span></div>
+      <div class="qrow"><div class="qnum" id="nQ">Q1</div><div><div class="qact" id="nAct"></div><div class="qfile" id="nFile"></div></div></div>
+      <div class="listen">GO cuando se oiga<q id="nGo"></q></div>
+      <div class="meta" id="nMeta"></div>
+      <button class="gobtn" id="go" type="button">GO</button>
+      <div class="nav"><button class="small-btn" id="prev" type="button">← Anterior</button><button class="small-btn" id="next" type="button">Siguiente →</button></div>
+    </section>
+
+    <section class="card playing" id="playCard">
+      <div class="eyebrow"><span class="lamp off" id="playLamp"></span><span id="playLabel">Nada sonando</span></div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="times"><span id="tEl">0:00</span><span class="rem" id="tRem">–0:00</span></div>
+      <div id="alert" class="alert" hidden></div>
+      <div class="vol"><label for="vol">Vol.</label><input id="vol" type="range" min="0" max="100" value="100"><span id="volV">100%</span></div>
+      <div class="ctl"><button id="fade" type="button">Fundido 3 s</button><button class="stop" id="stop" type="button">Stop</button></div>
+    </section>
+
+    <section class="card hide-sm">
+      <details>
+        <summary>Antes de la función</summary>
+        <ul>
+          <li>Móvil en modo avión, con Bluetooth activado.</li>
+          <li>Volumen del móvil al máximo; el nivel se regula en el altavoz.</li>
+          <li>La app funciona en modo avión (con Bluetooth activado). Comprueba que arriba pone «4/4 pistas listas».</li><li>Pantalla siempre encendida y el móvil enchufado si puede ser.</li>
+          <li>Q3 empieza al 50 %: es fondo mientras el mago habla.</li>
+          <li>Todas las pistas llevan 1 s de silencio al principio. Es normal.</li>
+        </ul>
+        <div class="nav"><button class="small-btn" id="test" type="button">Probar audio</button></div>
+      </details>
+      <p class="keys" style="margin:12px 0 0"><kbd>Espacio</kbd> GO · <kbd>F</kbd> fundido · <kbd>Esc</kbd> stop · <kbd>←</kbd><kbd>→</kbd> cambiar pista</p>
+    </section>
+  </aside>
+
+  <main id="script"></main>
+</div>
+
+<div class="dock" id="dock"><span class="dq" id="dQ">Q1</span><div class="dinfo"><span id="dRem">Standby</span><b id="dGo"></b></div><button class="dstop" id="dStop" type="button">Stop</button><button class="dgo" id="dGoBtn" type="button">GO</button></div>
+<script>
+const ACTS = [{"id": "inici", "n": "0", "name": "Inici", "min": "1", "lines": [{"k": "a", "t": "Sala a les fosques. Públic assegut. Esperar el senyal del mag."}, {"k": "cue", "q": "Q1"}, {"k": "audio", "t": "Tanqueu els ulls un instant… i escolteu."}, {"k": "audio", "t": "Cada segon que passa… ja no tornarà mai més."}, {"k": "audio", "t": "El temps. Tots el tenim. Tots el gastem. I ningú… no l'ha vist mai."}, {"k": "audio", "t": "Els sumeris el van dividir en seixanta parts. Gaudí el va esperar, sense pressa. I nosaltres… sempre en volem una mica més."}, {"k": "audio", "t": "Però… i si el temps no fos com creiem? I si es pogués estirar… viatjar-hi… o fins i tot, rebobinar-lo?"}, {"k": "audio", "t": "Aquesta nit, durant una estona, les agulles del rellotge obeiran unes altres lleis."}, {"k": "audio", "t": "Obriu els ulls. El viatge comença ara."}, {"k": "audio", "t": "Senyores i senyors… Misteris i Prodigis. Amb Raffael Fluss."}, {"k": "a", "t": "Amb «Amb Raffael Fluss» entra el mag. Pujar llum."}]}, {"id": "cordes", "n": "1", "name": "Les cordes", "min": "3", "lines": [{"k": "a", "t": "Entres amb les dues cordes a la mà, ben juntes, perquè no es vegi la diferència."}, {"k": "q", "t": "Avui parlarem del temps."}, {"k": "q", "t": "El temps és una cosa molt curiosa: ningú no l'ha vist mai… però tots en tenim. Alguns més que d'altres."}, {"k": "q", "t": "I us heu fixat que no sempre dura igual?"}, {"k": "q", "t": "Hi ha dies que se'ns fan llarguíssims…"}, {"k": "a", "t": "Mostres la corda llarga, deixant-la caure a poc a poc."}, {"k": "q", "t": "…com quan estem treballant. Sobretot els dilluns. Aquest és un dilluns."}, {"k": "q", "t": "I d'altres, en canvi, ens passen volant…"}, {"k": "a", "t": "Mostres la corda curta."}, {"k": "q", "t": "…com quan estem amb els amics. Aquest és un dissabte a la nit. Fixeu-vos que curtet."}, {"k": "a", "t": "Ajuntes les dues cordes a les mans."}, {"k": "q", "t": "Però no us deixeu enganyar. El temps és una il·lusió. Els dies, les hores, els minuts… sempre són els mateixos. Absolutament iguals."}, {"k": "a", "t": "Passi: les dues cordes queden iguals. Pausa perquè el públic ho vegi."}, {"k": "q", "t": "El dilluns i el dissabte… fan exactament el mateix."}, {"k": "a", "t": "Fas un nus amb les dues cordes iguals."}, {"k": "q", "t": "Els dies s'uneixen l'un amb l'altre: avui amb demà, aquesta setmana amb la següent… i així anem fent el fil de la nostra vida."}, {"k": "a", "t": "El nus llisca fins a un extrem."}, {"k": "q", "t": "Però el temps no s'està mai quiet. Quan menys t'ho esperes… s'escapa cap endavant."}, {"k": "a", "t": "Desfàs el nus: tornen a ser una corda llarga i una de curta."}, {"k": "q", "t": "I tan bon punt ens despistem, la il·lusió torna: el que ens avorreix, se'ns fa etern… i el que estimem, se'ns fa curt."}, {"k": "q", "t": "Per sort, hi ha una manera de posar-hi remei."}, {"k": "a", "t": "Poses la curta sobre la llarga, les agafes amb les dues mans… i tornen a ser iguals."}, {"k": "q", "t": "Només cal recordar-ho: tots tenim les mateixes hores. El que canvia… és com les vivim."}, {"k": "a", "t": "Pausa. Mires les dues cordes: es fonen en una de sola."}, {"k": "q", "t": "I al final… no hi ha temps llargs ni temps curts. Només n'hi ha un. Un únic fil: el de la nostra vida."}, {"k": "a", "t": "Aplaudiment."}, {"k": "q", "t": "I si el temps és un sol fil… potser hi podem viatjar."}]}, {"id": "capsula", "n": "2", "name": "La càpsula del temps", "min": "4–5", "lines": [{"k": "a", "t": "La càpsula és a la vista des del principi, tancada. Ningú no la toca."}, {"k": "q", "t": "Si el temps és un sol fil… potser hi podem viatjar."}, {"k": "q", "t": "L'ésser humà sempre ha volgut parlar amb el futur."}, {"k": "q", "t": "Fa cinc mil anys, els sumeris escrivien en tauletes de fang: els primers missatges enviats al futur. I d'ells hem heretat una cosa que fem servir cada dia: els seixanta minuts de cada hora. Encara mesurem el temps com ells."}, {"k": "q", "t": "L'any 1977, la sonda Voyager va marxar cap a les estrelles amb un disc d'or: la música i les veus de la Terra, per a qui el trobi d'aquí a milions d'anys."}, {"k": "q", "t": "I el 1940 es va segellar una càpsula del temps que no s'obrirà… fins a l'any 8113."}, {"k": "a", "t": "Assenyales la teva càpsula."}, {"k": "q", "t": "Aquesta és més modesta. Només viatjarà uns minuts… però ve del passat. La vaig tancar abans que arribéssiu."}, {"k": "a", "t": "Treus la baralla i la mostres."}, {"k": "q", "t": "I això… no és una baralla. És un calendari."}, {"k": "q", "t": "52 cartes: les 52 setmanes de l'any. 4 pals: les 4 estacions. 12 figures: els 12 mesos. Vermelles i negres: el dia i la nit."}, {"k": "q", "t": "I si sumeu tots els punts, de l'as fins al rei, més el comodí… 365. Un any sencer a la mà."}, {"k": "a", "t": "Et dirigeixes a un espectador."}, {"k": "q", "t": "Digues-me un número de l'1 al 52."}, {"k": "a", "t": "L'espectador diu el número. El situes a l'any: 1–13 hivern · 14–26 primavera · 27–39 estiu · 40–52 tardor."}, {"k": "q", "t": "La setmana [X]… [ple estiu]. Acabes d'escollir un lloc en el temps. Hi viatjarem."}, {"k": "a", "t": "Comptes fins a aquella posició i deixes la carta boca avall, a la vista."}, {"k": "q", "t": "Aquesta carta és el teu moment. Ningú no l'ha vista… ni tan sols jo."}, {"k": "q", "t": "Però hi ha algú que sí que la va veure: jo… en el passat."}, {"k": "a", "t": "SILENCI. Sense dir res, obres la càpsula a poc a poc, en treus la predicció i la mostres. Gires la carta: coincideixen."}, {"k": "a", "t": "Aplaudiment. Deixa'l créixer i acabar. No parlis per sobre."}, {"k": "a", "t": "Quan l'aplaudiment s'apaga, mires la càpsula. Fluixet, gairebé per a tu."}, {"k": "q", "t": "El passat ja sabia a quin lloc del temps viatjaries. · Qui sap… potser els viatges en el temps sí que existeixen. · Potser els fem cada dia sense adonar-nos-en."}, {"k": "q", "t": "Però hi ha un viatge en el temps que tots fem, vulguem o no: fer-nos grans."}]}, {"id": "revista", "n": "3", "name": "La revista", "min": "3", "lines": [{"k": "q", "t": "Però hi ha un viatge en el temps que tots fem, vulguem o no: fer-nos grans."}, {"k": "a", "t": "Prens la revista i l'obres per les pàgines dels joves. La mostres al públic."}, {"k": "q", "t": "El temps el notem, sobretot, quan ens anem fent grans."}, {"k": "q", "t": "Perquè quan som joves… sembla que tinguem tot el temps del món."}, {"k": "q", "t": "Mireu aquestes noies, tan guapes… o aquests nois. La de la cadena… la que es pren un cafè… Per a ells i per a elles, sembla que el temps s'hagi aturat."}, {"k": "q", "t": "Però penseu una cosa: el temps passa per a tothom."}, {"k": "cue", "q": "Q2"}, {"k": "a", "t": "Gira la revista en el sentit de les agulles."}, {"k": "q", "t": "I quan ens en volem adonar, els dies, les setmanes, els anys… han passat sense que ens n'adonem."}, {"k": "a", "t": "S'atura el tic-tac. Mostres les mateixes persones, envellides. Pausa perquè el públic les reconegui."}, {"k": "q", "t": "La noia de la cadena… la del cafè…"}, {"k": "a", "t": "Somrius."}, {"k": "q", "t": "Però mireu: no han perdut el somriure."}, {"k": "q", "t": "Això és perquè la bellesa no és a la pell. És a l'interior. I aquesta… el temps no la toca."}, {"k": "a", "t": "Aplaudiment."}, {"k": "q", "t": "I hi ha qui no només envelleix bé… sinó que construeix per a un temps que no és el seu."}]}, {"id": "gaudi", "n": "4", "name": "Gaudí", "min": "4", "lines": [{"k": "a", "t": "Treus el paquet de postals de Gaudí."}, {"k": "q", "t": "I hi ha qui no només envelleix bé… sinó que construeix per a un temps que no és el seu."}, {"k": "q", "t": "Antoni Gaudí va néixer aquí, a Reus. I tenia un mestre molt especial: la natura."}, {"k": "q", "t": "Deia que l'originalitat consisteix a tornar a l'origen. Mirava els arbres, les petxines, els ossos… i d'allà treia les formes dels seus edificis."}, {"k": "a", "t": "Vas mostrant les postals, una a una: la Pedrera, la Casa Batlló, el Park Güell, la Sagrada Família…"}, {"k": "q", "t": "Cada postal és un instant congelat."}, {"k": "a", "t": "T'atures a la Sagrada Família."}, {"k": "q", "t": "Quan li preguntaven per què la Sagrada Família anava tan a poc a poc, Gaudí responia: · “El meu client no té pressa.”"}, {"k": "q", "t": "Ell sabia que no la veuria acabada. Fa més de 140 anys que s'hi treballa… i encara creix. Gaudí construïa per a un temps que no era el seu."}, {"k": "a", "t": "L'espectador tria un monument (ajustar segons el mètode)."}, {"k": "q", "t": "Per trobar la forma perfecta, Gaudí tenia un aliat invisible: la gravetat. Penjava cadenes i pesos, i deixava que la gravetat decidís com havia de ser l'edifici."}, {"k": "a", "t": "Treus les pinces."}, {"k": "q", "t": "Aquesta nit, farem com ell. Deixarem que la gravetat trobi el monument."}, {"k": "a", "t": "Efecte de les pinces: la gravetat troba el monument escollit."}, {"k": "a", "t": "Pausa. Aplaudiment."}, {"k": "q", "t": "…sense pressa. Com el client de Gaudí."}, {"k": "q", "t": "Hi ha objectes que guarden temps a dins. Algú porta un anell?"}]}, {"id": "clau", "n": "5", "name": "La clau", "min": "3", "lines": [{"k": "q", "t": "Hi ha objectes que guarden temps a dins. · Algú porta un anell?"}, {"k": "a", "t": "Tries un espectador que porti un anell i li demanes que te'l deixi. Li preguntes el nom."}, {"k": "q", "t": "[Nom], aquest anell… té història? D'on ve?"}, {"k": "a", "t": "Escoltes la resposta. Si té un significat especial, ho repeteixes perquè ho senti tothom."}, {"k": "q", "t": "Doncs aquí dins hi ha molts anys guardats."}, {"k": "a", "t": "Mostres l'anell, ben a la vista, entre els dits."}, {"k": "q", "t": "Fixeu-vos en una cosa. Un anell és un cercle. No té principi… ni final."}, {"k": "q", "t": "Per això es regala “per sempre”. Perquè un cercle no s'acaba mai."}, {"k": "q", "t": "Però un “per sempre” no es pot trencar. · El que sí que pot fer… és transformar-se."}, {"k": "a", "t": "Transformació: l'anell es converteix en una clau. Pausa perquè el públic ho vegi."}, {"k": "q", "t": "El teu “per sempre” no s'ha trencat. S'ha convertit en una clau. · Perquè el que és per sempre no es perd: canvia de forma."}, {"k": "a", "t": "Mires l'espectador, somrient."}, {"k": "q", "t": "Tranquil·la tranquil. Abans que acabi la nit, te'l tornaré. Paraula de mag."}, {"k": "a", "t": "Dones la clau a l'espectador."}, {"k": "q", "t": "Guarda-la tu. No la perdis… la necessitarem."}, {"k": "q", "t": "Mentre el teu ‘per sempre’ espera… parlem de records."}]}, {"id": "rising", "n": "6", "name": "Rising cards", "min": "4", "lines": [{"k": "a", "t": "La copa de vidre ja és a la taula des del principi, buida."}, {"k": "q", "t": "Mentre el teu “per sempre” espera… parlem de records. · El temps esborra moltes coses. Però no totes."}, {"k": "a", "t": "Treus la baralla i t'acostes a tres espectadors."}, {"k": "q", "t": "Us demanaré que cadascú triï una carta. Però no és una carta qualsevol: és un record. Un moment vostre."}, {"k": "a", "t": "Cada espectador tria una carta lliurement."}, {"k": "q", "t": "I perquè ningú no dubti que és vostre… hi posareu el vostre nom."}, {"k": "a", "t": "Cada espectador escriu el seu nom a la carta. Recorda l'ordre: primer, segon, tercer."}, {"k": "q", "t": "Els records porten sempre el nom de qui els ha viscut."}, {"k": "a", "t": "Les cartes tornen a la baralla. Barreges, o deixes que barregi un espectador."}, {"k": "q", "t": "Ara aquests records es perden… en el passat. Entre centenars d'altres dies, d'altres moments, d'altres cares. Com passa amb tants records."}, {"k": "a", "t": "Col·loques la baralla dins la copa de vidre."}, {"k": "q", "t": "Amb una copa com aquesta brindem pels bons moments, per recordar-los. Avui hi guardarem els vostres records."}, {"k": "cue", "q": "Q3"}, {"k": "q", "t": "Perquè els records importants no desapareixen. Esperen. Esperen el seu moment."}, {"k": "a", "t": "Silenci. Mires la copa."}, {"k": "q", "t": "I quan arriba el seu moment…"}, {"k": "a", "t": "Et dirigeixes al primer espectador pel seu nom."}, {"k": "q", "t": "[Nom], quin era el teu record? Quina carta?"}, {"k": "a", "t": "L'espectador diu la seva carta en veu alta. Puja la primera carta: és la seva, amb el seu nom."}, {"k": "q", "t": "El primer record."}, {"k": "a", "t": "Al segon espectador, pel seu nom."}, {"k": "q", "t": "[Nom], i el teu?"}, {"k": "a", "t": "Diu la carta. Puja la segona."}, {"k": "q", "t": "El segon…"}, {"k": "a", "t": "Al tercer espectador, pel seu nom. Més a poc a poc."}, {"k": "q", "t": "I tu, [Nom]… quin era el teu?"}, {"k": "a", "t": "Diu la carta. Pausa llarga. Puja la tercera, molt lentament."}, {"k": "q", "t": "…i l'últim, que sempre és el que més costa de recuperar."}, {"k": "a", "t": "Aplaudiment. Tornes les cartes als espectadors com a record."}, {"k": "q", "t": "Guardeu-les. Són vostres. Els records, millor tenir-los a prop."}, {"k": "fade", "q": "Q3", "t": "Fos de 3 s de la música (Q3)."}, {"k": "a", "t": "Et gires cap a l'espectador que té la clau."}, {"k": "q", "t": "Els records tornen… i les coses perdudes, també. · I parlant de coses perdudes… encara et dec una cosa."}]}, {"id": "cabdell", "n": "7", "name": "El cabdell i el tancament", "min": "6–7", "lines": [{"k": "a", "t": "Ve de les rising cards. Demanes la clau a l'espectador que la guardava."}, {"k": "q", "t": "[Nom], em deixes la clau? · Gràcies."}, {"k": "a", "t": "Treus la bossa i, de dins, la caixa tancada. La mostres."}, {"k": "q", "t": "Tot el temps que hem compartit aquesta nit ha quedat guardat aquí dins."}, {"k": "q", "t": "Els dilluns llarguíssims i els dissabtes que passen volant… La càpsula que ens va portar a un lloc del temps… Aquells joves que es van fer grans sense perdre el somriure… Gaudí, que no tenia pressa… I els vostres records, que van tornar quan menys ho esperàveu."}, {"k": "q", "t": "Tot és aquí. I només hi ha una clau que ho pot obrir."}, {"k": "a", "t": "Obres la caixa amb la clau. En treus el cabdell de llana."}, {"k": "q", "t": "El fil del temps."}, {"k": "a", "t": "Poses en marxa l'àudio i comences a desfer el cabdell, volta a volta."}, {"k": "cue", "q": "Q4"}, {"k": "audio", "t": "Tot el que hem viscut avui és aquí dins. Enrotllat, com els dies. Cada volta que desfem és un instant que tornem enrere… una paraula, una mirada, un somriure."}, {"k": "audio", "t": "I si per un moment poguéssim aturar el temps?"}, {"k": "audionote", "t": "El tic-tac s'atura. Silenci total (6 s). ET CONGELES a mig gest, amb el fil a la mà. No et mous."}, {"k": "audionote", "t": "Torna el tic-tac. Continues com si res."}, {"k": "audio", "t": "No. El temps no s'atura mai. Ni per als mags."}, {"k": "audio", "t": "El fil només gira en un sentit. El que hem dit, ja està dit. El que hem viscut, ja és nostre. I potser aquest és el veritable misteri: que no el podem desfer… però sí que el podem seguir."}, {"k": "audio", "t": "Perquè el fil ens porta endavant: cap a la veritat, cap als dies que encara no hem estrenat. Viure'ls sense pressa. Viure'ls de debò."}, {"k": "audio", "t": "I quan arribes al final del fil… descobreixes que allò que semblava perdut… t'estava esperant."}, {"k": "a", "t": "Al final del fil apareix una capseta. Just amb l'última frase."}, {"k": "a", "t": "Dones la capseta a l'espectador perquè l'obri ell mateix: dins hi ha el seu anell (o la moneda signada)."}, {"k": "a", "t": "L'espectador treu el seu anell. Li dius, pel seu nom:"}, {"k": "q", "t": "[Nom]… el teu “per sempre”… torna a ser teu."}, {"k": "a", "t": "(Si era la moneda signada: l'espectador comprova la signatura. “El teu temps… torna a ser teu.”)"}, {"k": "a", "t": "Aplaudiment. Deixa'l créixer."}, {"k": "a", "t": "TANCAMENT — al centre, llum sobre tu."}, {"k": "q", "t": "El temps és l'única cosa que no es pot tornar."}, {"k": "q", "t": "Però aquesta nit l'hem estirat, hi hem viatjat, l'hem vist passar… i l'hem seguit fins al final del fil."}, {"k": "q", "t": "Gràcies per regalar-me el vostre temps. · Bona nit."}, {"k": "a", "t": "Reverència. Fosc."}]}, {"id": "bis", "n": "", "name": "Bis (opcional): cubilets", "min": "5", "lines": [{"k": "a", "t": "Només si el públic en demana més. Sense àudio."}]}];
+const CUES = {
+  Q1:{file:"01_Inici.mp3", name:"01_Inici", act:"Inicio", go:"Señal del mago · sala a oscuras", vol:1, end:"Termina sola", meta:["0:58","Termina sola","Con «Amb Raffael Fluss» → luz"]},
+  Q2:{file:"03_Revista_TicTac.mp3", name:"03_Revista_TicTac", act:"La revista", go:"…el temps passa per a tothom.", vol:1, end:"Se corta sola", meta:["0:18","Se corta sola de golpe","No hacer fundido"]},
+  Q3:{file:"04_RisingCards_.mp3", name:"04_RisingCards_", act:"Rising cards", go:"…Avui hi guardarem els vostres records.", vol:.5, end:"Fundido 3 s", meta:["2:02","Volumen 50 %","Fundido con «Guardeu-les»"]},
+  Q4:{file:"07_Cabdell.mp3", name:"07_Cabdell", act:"El ovillo", go:"El fil del temps.", vol:1, end:"Termina sola", silence:[25.2,29.6], meta:["1:14","Termina sola","0:25 silencio: NO tocar"]},
+};
+const ORDER = ["Q1","Q2","Q3","Q4"];
+const $ = id => document.getElementById(id);
+const fmt = s => { s=Math.max(0,Math.round(s)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); };
+const esc = s => s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+/* ---------- script ---------- */
+const main = $("script");
+ACTS.forEach(a=>{
+  const sec=document.createElement("section"); sec.className="act"; sec.id="act-"+a.id;
+  sec.innerHTML=`<h2><span class="n">${a.n}</span>${esc(a.name)}<span class="min">≈ ${a.min} min</span></h2>`;
+  a.lines.forEach(l=>{
+    if(l.k==="cue"){
+      const c=CUES[l.q]; const d=document.createElement("div"); d.className="cue"; d.id="cue-"+l.q; d.dataset.q=l.q;
+      d.innerHTML=`<span class="qn">${l.q}</span><span class="txt">GO · ${esc(c.name)}<small>${esc(c.meta.join(" · "))}</small></span><button type="button" class="arm">Preparar</button><button type="button" class="play">GO</button>`;
+      d.querySelector(".arm").onclick=()=>arm(ORDER.indexOf(l.q),true);
+      d.querySelector(".play").onclick=()=>{arm(ORDER.indexOf(l.q),false);go();};
+      sec.appendChild(d);
+    } else if(l.k==="fade"){
+      const d=document.createElement("div"); d.className="cue fade";
+      d.innerHTML=`<span class="qn">${l.q} ↓</span><span class="txt">Fundido de la música<small>Al decir «Guardeu-les…»</small></span><button type="button">Fundido 3 s</button>`;
+      d.querySelector("button").onclick=()=>fadeOut(3);
+      sec.appendChild(d);
+    } else {
+      const p=document.createElement("p"); p.className="ln "+l.k; p.textContent=(l.k==="q"?"«"+l.t+"»":l.t); sec.appendChild(p);
+    }
+  });
+  main.appendChild(sec);
+});
+
+/* ---------- audio: all tracks are decoded into memory, so after "Cargar pistas" the page works without internet ---------- */
+let ctx=null; const buffers={}; let loaded=0;
+function ensureCtx(){
+  if(!ctx){ const AC=window.AudioContext||window.webkitAudioContext; ctx=new AC(); }
+  if(ctx.state==="suspended") ctx.resume();
+}
+async function loadAll(){
+  ensureCtx(); $("load").disabled=true; $("loadState").textContent="Cargando…";
+  for(const q of ORDER){
+    if(buffers[q]) continue;
+    try{
+      const r=await fetch(CUES[q].file); const ab=await r.arrayBuffer();
+      buffers[q]=await new Promise((res,rej)=>ctx.decodeAudioData(ab,res,rej));
+      loaded++; $("loadState").textContent=loaded+"/4 pistas en memoria";
+    }catch(e){ $("loadState").textContent="Error al cargar "+CUES[q].name+". Comprueba la conexión y vuelve a pulsar."; $("load").disabled=false; return; }
+  }
+  $("loadState").textContent="4/4 pistas listas · funciona sin internet";
+  $("loadBox").classList.add("ok"); $("load").textContent="Pistas cargadas";
+}
+const players={}; // q -> {src,gain,start,dur}
+function playBuf(q){
+  const c=CUES[q], buf=buffers[q];
+  const g=ctx.createGain(); g.gain.setValueAtTime(c.vol,ctx.currentTime); g.connect(ctx.destination);
+  const src=ctx.createBufferSource(); src.buffer=buf; src.connect(g); src.start();
+  const p={src,g,start:ctx.currentTime,dur:buf.duration,ended:false};
+  src.onended=()=>{p.ended=true;}; players[q]=p; return p;
+}
+let armed=0, live=null, raf=null, showStart=null, wake=null;
+function arm(i,scroll){
+  armed=Math.max(0,Math.min(ORDER.length,i));
+  document.querySelectorAll(".cue[data-q]").forEach(d=>{
+    const idx=ORDER.indexOf(d.dataset.q);
+    d.classList.toggle("is-armed",idx===armed);
+    d.classList.toggle("is-done",idx<armed && d.dataset.q!==live);
+  });
+  const card=$("nextCard");
+  if(armed>=ORDER.length){
+    $("nQ").textContent="—"; $("nAct").textContent="Sin más pistas"; $("nFile").textContent=""; $("nGo").textContent="Cierre en directo · Oscuro";
+    $("nMeta").innerHTML=""; $("go").disabled=true; $("dQ").textContent="—"; $("dGo").textContent="Fin de pistas"; $("dGoBtn").disabled=true; $("nextLabel").textContent="Fin de pistas"; $("lamp").className="lamp off"; card.classList.remove("armed"); return;
+  }
+  const q=ORDER[armed], c=CUES[q];
+  $("dQ").textContent=q; $("dGo").textContent="«"+c.go+"»"; $("dGoBtn").disabled=false;
+  $("go").disabled=false; card.classList.add("armed"); $("lamp").className="lamp"; $("nextLabel").textContent="Standby · siguiente pista";
+  $("nQ").textContent=q; $("nAct").textContent=c.act; $("nFile").textContent=c.name+".wav";
+  $("nGo").textContent=c.go;
+  $("nMeta").innerHTML=c.meta.map((m,i)=>`<span class="chip${i>0?" warn":""}">${esc(m)}</span>`).join("");
+  if(scroll){ const el=$("cue-"+q); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); }
+}
+function go(){
+  if(armed>=ORDER.length) return;
+  ensureCtx();
+  const q=ORDER[armed], c=CUES[q];
+  if(live && live!==q) fadeOut(1);
+  if(!buffers[q]){ $("loadState").textContent="Las pistas aún se están cargando. Espera un momento."; $("loadBox").scrollIntoView({block:"center"}); return; }
+  playBuf(q);
+  live=q; $("vol").value=Math.round(c.vol*100); $("volV").textContent=$("vol").value+"%";
+  if(showStart===null && q==="Q1") showStart=Date.now();
+  if(navigator.wakeLock && !wake){ navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{}); }
+  document.querySelectorAll(".cue[data-q]").forEach(d=>d.classList.toggle("is-live",d.dataset.q===q));
+  arm(armed+1,true);
+  tick();
+}
+function fadeOut(sec){
+  if(!live||!ctx) return;
+  const p=players[live]; if(!p||p.ended) return; const g=p.g.gain, now=ctx.currentTime;
+  g.cancelScheduledValues(now); g.setValueAtTime(g.value,now); g.linearRampToValueAtTime(0,now+sec);
+  try{ p.src.stop(now+sec+0.05); }catch(e){}
+}
+function stop(){ if(live) fadeOut(0.3); }
+function tick(){
+  cancelAnimationFrame(raf);
+  const loop=()=>{
+    const p=live&&players[live]; const on=p&&!p.ended;
+    if(p){
+      const d=p.dur, t=Math.min(d,ctx.currentTime-p.start);
+      $("bar").style.width=(d?t/d*100:0)+"%"; $("tEl").textContent=fmt(t); $("tRem").textContent="–"+fmt(d-t); $("dRem").textContent=(on?("▶ "+live+" –"+fmt(d-t)):"Standby");
+      const s=CUES[live].silence; const inSil=on&&s&&t>=s[0]&&t<s[1];
+      $("alert").hidden=!inSil; if(inSil) $("alert").textContent="Silencio a propósito · congelación · no tocar ("+fmt(s[1]-t)+")";
+    }
+    $("playLamp").className="lamp "+(on?"go":"off");
+    $("playLabel").textContent=on?("Sonando · "+live+" · "+CUES[live].name):(live?"Terminado · "+live:"Nada sonando");
+    if(!on){ document.querySelectorAll(".cue.is-live").forEach(d=>{d.classList.remove("is-live");d.classList.add("is-done");}); }
+    if(on) raf=requestAnimationFrame(loop);
+  };
+  raf=requestAnimationFrame(loop);
+}
+setInterval(()=>{ $("clock").textContent=showStart===null?"00:00":fmt((Date.now()-showStart)/1000).padStart(5,"0"); },500);
+$("clockReset").onclick=()=>{ showStart=Date.now(); };
+$("go").onclick=go; $("dGoBtn").onclick=go; $("dStop").onclick=stop; $("stop").onclick=stop; $("fade").onclick=()=>fadeOut(3);
+$("prev").onclick=()=>arm(armed-1,true); $("next").onclick=()=>arm(armed+1,true);
+$("vol").oninput=e=>{ $("volV").textContent=e.target.value+"%"; if(live&&ctx){ const g=players[live].g.gain; g.cancelScheduledValues(ctx.currentTime); g.setValueAtTime(e.target.value/100,ctx.currentTime);} };
+$("load").onclick=loadAll;
+$("test").onclick=()=>{ ensureCtx(); const o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.value=880; g.gain.value=.15; o.connect(g).connect(ctx.destination); o.start(); g.gain.setTargetAtTime(0,ctx.currentTime+.25,.05); o.stop(ctx.currentTime+.5); };
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT") return;
+  if(e.code==="Space"){ e.preventDefault(); go(); }
+  else if(e.key==="Escape") stop();
+  else if(e.key==="f"||e.key==="F") fadeOut(3);
+  else if(e.key==="ArrowRight") arm(armed+1,true);
+  else if(e.key==="ArrowLeft") arm(armed-1,true);
+});
+arm(0,false);
+// Load the tracks into memory straight away (they come from the offline cache after the first visit)
+ensureCtx(); loadAll();
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+</script>
+
+</body>
+</html>
